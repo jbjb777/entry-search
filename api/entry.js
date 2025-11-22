@@ -1,32 +1,40 @@
 export default async function handler(req, res) {
-  const { term = "", limit = 20 } = req.body;
-
-  const query = `
-    query ($limit: Int, $term: String) {
-      SELECT_PROJECTS(
-        limit: $limit,
-        order: "recent",
-        sort: "desc",
-        term: $term
-      ) {
-        _id
-        name
-        thumb
-        user { username }
-      }
-    }
-  `;
-
   try {
-    const apiRes = await fetch("https://playentry.org/graphql", {
+    const { term } = req.query;
+
+    const query = `
+      query {
+        SELECT_PROJECTS(limit: 20, offset: 0, term: "${term}", order: "created", sort: "desc") {
+          _id
+          name
+          thumb
+          views
+          likes
+          comments
+          created
+          user {
+            username
+          }
+        }
+      }
+    `;
+
+    const response = await fetch("https://playentry.org/graphql", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, variables: { limit, term } }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query }),
     });
 
-    const data = await apiRes.json();
-    return res.status(200).json(data.data.SELECT_PROJECTS || []);
-  } catch (err) {
-    return res.status(500).json({ error: "Server request failed" });
+    const result = await response.json();
+
+    if (!result.data || !result.data.SELECT_PROJECTS) {
+      return res.status(500).json({ error: "GraphQL Failed", detail: result });
+    }
+
+    res.status(200).json(result.data.SELECT_PROJECTS);
+  } catch (e) {
+    res.status(500).json({ error: "Server Error", detail: e.toString() });
   }
 }
