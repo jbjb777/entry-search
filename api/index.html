@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Entry Project Search</title>
+</head>
+<body>
+  <h2>엔트리 프로젝트 검색</h2>
+
+  <input id="search" placeholder="검색어">
+  <button onclick="load()">검색</button>
+
+  <div id="result"></div>
+
+  <script>
+    async function load() {
+      const term = document.getElementById("search").value;
+
+      const res = await fetch("/api/entry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ term })
+      });
+
+      const list = await res.json();
+
+      document.getElementById("result").innerHTML =
+        list.map(p => `
+          <div>
+            <img src="${p.thumb}" width="90"/>
+            <p>${p.name}</p>
+            <small>${p.user.username}</small><br>
+            <a href="https://playentry.org/project/${p._id}" target="_blank">▶ 열기</a>
+          </div><br>
+        `).join("");
+    }
+  </script>
+</body>
+</html>
