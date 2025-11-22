@@ -23,18 +23,28 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Origin": "https://playentry.org",
+        "Referer": "https://playentry.org/",
+        "User-Agent": "Mozilla/5.0",
       },
       body: JSON.stringify({ query }),
     });
 
-    const result = await response.json();
+    const result = await response.json().catch(() => null);
 
-    if (!result.data || !result.data.SELECT_PROJECTS) {
-      return res.status(500).json({ error: "GraphQL Failed", detail: result });
+    if (!result?.data?.SELECT_PROJECTS) {
+      return res.status(500).json({
+        error: "GraphQL Failed",
+        detail: result
+      });
     }
 
-    res.status(200).json(result.data.SELECT_PROJECTS);
+    return res.status(200).json(result.data.SELECT_PROJECTS);
+
   } catch (e) {
-    res.status(500).json({ error: "Server Error", detail: e.toString() });
+    return res.status(500).json({
+      error: "Server Error",
+      detail: e.toString(),
+    });
   }
 }
