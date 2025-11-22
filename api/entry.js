@@ -2,49 +2,22 @@ export default async function handler(req, res) {
   try {
     const { term } = req.query;
 
-    const query = `
-      query {
-        SELECT_PROJECTS(limit: 20, offset: 0, term: "${term}", order: "created", sort: "desc") {
-          _id
-          name
-          thumb
-          views
-          likes
-          comments
-          created
-          user {
-            username
-          }
-        }
-      }
-    `;
+    const url = `https://playentry.org/api/project/find?search=${encodeURIComponent(term)}&page=1`;
 
-    const response = await fetch("https://playentry.org/graphql", {
-      method: "POST",
+    const response = await fetch(url, {
       headers: {
-        "Content-Type": "application/json",
-        "Origin": "https://playentry.org",
-        "Referer": "https://playentry.org/",
-        "User-Agent": "Mozilla/5.0",
-      },
-      body: JSON.stringify({ query }),
+        "User-Agent": "Mozilla/5.0"
+      }
     });
 
-    const result = await response.json().catch(() => null);
+    const result = await response.json();
 
-    if (!result?.data?.SELECT_PROJECTS) {
-      return res.status(500).json({
-        error: "GraphQL Failed",
-        detail: result
-      });
+    if (!Array.isArray(result.data)) {
+      return res.status(500).json({ error: "Invalid data", result });
     }
 
-    return res.status(200).json(result.data.SELECT_PROJECTS);
-
+    res.status(200).json(result.data);
   } catch (e) {
-    return res.status(500).json({
-      error: "Server Error",
-      detail: e.toString(),
-    });
+    res.status(500).json({ error: e.toString() });
   }
 }
