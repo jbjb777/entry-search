@@ -298,7 +298,7 @@
 
             try {
                 // 우리의 서버리스 함수 호출
-                const response = await fetch('/api/search-users', {
+                const response = await fetch('/api/search', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -319,8 +319,12 @@
                 // 로딩 숨기기
                 loading.classList.remove('active');
 
+                console.log('Response data:', data);
+
                 if (!data.success) {
-                    showError('API 오류가 발생했습니다: ' + (data.error || 'Unknown error'));
+                    showError('API 오류: ' + (data.error || 'Unknown') + 
+                             (data.details ? ' - ' + data.details : '') +
+                             (data.message ? ' - ' + data.message : ''));
                     return;
                 }
 
@@ -335,8 +339,10 @@
 
             } catch (error) {
                 loading.classList.remove('active');
-                showError('검색 중 오류가 발생했습니다: ' + error.message);
-                console.error('Error:', error);
+                const errorDetails = error.message || error.toString();
+                showError('검색 중 오류가 발생했습니다: ' + errorDetails);
+                console.error('Full Error:', error);
+                console.error('Error details:', errorDetails);
             } finally {
                 searchBtn.disabled = false;
             }
