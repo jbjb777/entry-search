@@ -1,39 +1,454 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>Entry Project Search</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>엔트리 사용자 검색</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .search-box {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .search-input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #searchBtn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #searchBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #searchBtn:active {
+            transform: translateY(0);
+        }
+
+        #searchBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            color: #856404;
+            font-size: 14px;
+        }
+
+        .warning strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .user-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .user-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .user-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .user-id {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.85em;
+            color: #888;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 10px;
+            padding: 20px;
+            color: #721c24;
+            text-align: center;
+        }
+
+        .error h3 {
+            margin-bottom: 10px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .no-results-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
 </head>
 <body>
-  <h2>엔트리 프로젝트 검색</h2>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 엔트리 사용자 검색</h1>
+            <p>엔트리 사용자를 검색해보세요</p>
+        </div>
 
-  <input id="search" placeholder="검색어">
-  <button onclick="load()">검색</button>
+        <div class="search-box">
+            <div class="warning">
+                <strong>⚠️ 중요 안내</strong>
+                이 데모는 엔트리 공식 API를 직접 호출하려고 시도합니다. 
+                실제로는 CSRF 보호로 인해 브라우저에서 직접 호출이 차단될 수 있습니다. 
+                실제 운영 환경에서는 서버 측 프록시가 필요합니다.
+            </div>
 
-  <div id="result"></div>
+            <div class="search-input-wrapper">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="사용자 이름을 입력하세요..."
+                    autocomplete="off"
+                >
+                <button id="searchBtn">검색</button>
+            </div>
 
-  <script>
-    async function load() {
-      const term = document.getElementById("search").value;
+            <div class="status" id="status">
+                검색어를 입력하고 검색 버튼을 클릭하세요
+            </div>
+        </div>
 
-      const res = await fetch("/api/entry", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ term })
-      });
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>사용자를 검색하는 중...</p>
+        </div>
 
-      const list = await res.json();
+        <div class="results" id="results"></div>
+    </div>
 
-      document.getElementById("result").innerHTML =
-        list.map(p => `
-          <div>
-            <img src="${p.thumb}" width="90"/>
-            <p>${p.name}</p>
-            <small>${p.user.username}</small><br>
-            <a href="https://playentry.org/project/${p._id}" target="_blank">▶ 열기</a>
-          </div><br>
-        `).join("");
-    }
-  </script>
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const status = document.getElementById('status');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+
+        // Enter 키 이벤트
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchUsers();
+            }
+        });
+
+        // 검색 버튼 클릭
+        searchBtn.addEventListener('click', searchUsers);
+
+        async function searchUsers() {
+            const searchTerm = searchInput.value.trim();
+            
+            if (!searchTerm) {
+                status.textContent = '검색어를 입력해주세요';
+                status.style.background = '#fff3cd';
+                status.style.color = '#856404';
+                return;
+            }
+
+            // UI 상태 업데이트
+            searchBtn.disabled = true;
+            status.style.display = 'none';
+            loading.classList.add('active');
+            results.classList.remove('active');
+            results.innerHTML = '';
+
+            try {
+                // GraphQL 쿼리 (사용자 검색)
+                const query = `
+                    query SELECT_USERS($username: String, $limit: Int, $offset: Int) {
+                        SELECT_USERS(username: $username, limit: $limit, offset: $offset) {
+                            _id
+                            username
+                            nickname
+                            profileImage
+                            status {
+                                following
+                                follower
+                            }
+                            description
+                        }
+                    }
+                `;
+
+                const variables = {
+                    username: searchTerm,
+                    limit: 20,
+                    offset: 0
+                };
+
+                const response = await fetch('https://playentry.org/graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        variables: variables
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // 로딩 숨기기
+                loading.classList.remove('active');
+
+                if (data.errors) {
+                    showError('API 오류가 발생했습니다: ' + data.errors[0].message);
+                    return;
+                }
+
+                const users = data.data?.SELECT_USERS || [];
+                
+                if (users.length === 0) {
+                    showNoResults();
+                    return;
+                }
+
+                displayUsers(users);
+
+            } catch (error) {
+                loading.classList.remove('active');
+                showError(
+                    'API 호출이 차단되었습니다. ' +
+                    '엔트리 API는 CSRF 보호가 되어 있어 브라우저에서 직접 호출할 수 없습니다. ' +
+                    '실제 사용을 위해서는 서버 측 프록시가 필요합니다.'
+                );
+                console.error('Error:', error);
+            } finally {
+                searchBtn.disabled = false;
+            }
+        }
+
+        function displayUsers(users) {
+            results.innerHTML = '';
+            results.classList.add('active');
+
+            users.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.className = 'user-card';
+                
+                const initial = user.nickname ? user.nickname[0].toUpperCase() : user.username[0].toUpperCase();
+                const avatarContent = user.profileImage 
+                    ? `<img src="${user.profileImage}" alt="${user.nickname || user.username}">`
+                    : initial;
+
+                userCard.innerHTML = `
+                    <div class="user-avatar">${avatarContent}</div>
+                    <div class="user-info">
+                        <div class="user-name">${user.nickname || user.username}</div>
+                        <div class="user-id">@${user.username}</div>
+                        <div class="user-stats">
+                            <div class="stat">
+                                <span>👥</span>
+                                <span>팔로워 ${user.status?.follower || 0}</span>
+                            </div>
+                            <div class="stat">
+                                <span>➕</span>
+                                <span>팔로잉 ${user.status?.following || 0}</span>
+                            </div>
+                        </div>
+                        ${user.description ? `<div style="margin-top: 8px; color: #666; font-size: 0.9em;">${user.description}</div>` : ''}
+                    </div>
+                `;
+
+                userCard.addEventListener('click', () => {
+                    window.open(`https://playentry.org/user/${user._id}`, '_blank');
+                });
+
+                results.appendChild(userCard);
+            });
+        }
+
+        function showError(message) {
+            results.innerHTML = `
+                <div class="error">
+                    <h3>❌ 오류 발생</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+            results.classList.add('active');
+        }
+
+        function showNoResults() {
+            results.innerHTML = `
+                <div class="no-results">
+                    <div class="no-results-icon">🔍</div>
+                    <h3>검색 결과가 없습니다</h3>
+                    <p>다른 검색어로 시도해보세요</p>
+                </div>
+            `;
+            results.classList.add('active');
+        }
+    </script>
 </body>
 </html>
