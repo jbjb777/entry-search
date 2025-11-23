@@ -1,5 +1,4 @@
-// Vercel 서버리스 함수 - 엔트리 API 프록시
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // CORS 설정
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,15 +19,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // 요청 본문 파싱
-    let body = req.body;
-    
-    // body가 문자열이면 파싱
-    if (typeof body === 'string') {
-      body = JSON.parse(body);
-    }
-
-    const { searchTerm, limit = 20, offset = 0 } = body;
+    const { searchTerm, limit = 20, offset = 0 } = req.body;
 
     if (!searchTerm) {
       return res.status(400).json({ 
@@ -65,13 +56,19 @@ module.exports = async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0',
       },
       body: JSON.stringify({
         query: query,
         variables: variables
       })
     });
+
+    if (!entryResponse.ok) {
+      return res.status(500).json({
+        success: false,
+        error: `Entry API returned ${entryResponse.status}`
+      });
+    }
 
     const data = await entryResponse.json();
 
@@ -91,12 +88,10 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Server error',
-      message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      message: error.message
     });
   }
-};
+}
