@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
   // CORS 설정
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -56,6 +58,8 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       },
       body: JSON.stringify({
         query: query,
@@ -66,7 +70,8 @@ export default async function handler(req, res) {
     if (!entryResponse.ok) {
       return res.status(500).json({
         success: false,
-        error: `Entry API returned ${entryResponse.status}`
+        error: `Entry API returned ${entryResponse.status}`,
+        statusText: entryResponse.statusText
       });
     }
 
@@ -77,21 +82,24 @@ export default async function handler(req, res) {
       return res.status(500).json({ 
         success: false,
         error: 'Entry API error', 
-        details: data.errors[0]?.message || 'Unknown error'
+        details: data.errors[0]?.message || 'Unknown error',
+        allErrors: data.errors
       });
     }
 
     // 성공 응답
     return res.status(200).json({
       success: true,
-      users: data.data?.SELECT_USERS || []
+      users: data.data?.SELECT_USERS || [],
+      count: (data.data?.SELECT_USERS || []).length
     });
 
   } catch (error) {
     return res.status(500).json({ 
       success: false,
       error: 'Server error',
-      message: error.message
+      message: error.message,
+      type: error.name
     });
   }
 }
